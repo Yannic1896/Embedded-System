@@ -6,12 +6,12 @@
 #define BUTTON_ROTARY_PIN   PINB
 #define BUTTON_ROTARY_PORT  PORTB
 #define BUTTON_ROTARY_DDR   DDRB
-#define BUTTON_ROTARY_BIT   6
+#define BUTTON_ROTARY_BIT   5
 
 #define BUTTON_PUSH_PIN     PINB
 #define BUTTON_PUSH_PORT    PORTB
 #define BUTTON_PUSH_DDR     DDRB
-#define BUTTON_PUSH_BIT     7
+#define BUTTON_PUSH_BIT     4
 
 void button_init(void) {
     // Configure rotary button pin as input
