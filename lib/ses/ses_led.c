@@ -28,11 +28,11 @@ void led_redToggle(void) {
 }
 
 void led_redOn(void) {
-    LED_RED_PORT |= (1 << LED_RED_BIT);  // Set bit high
+    LED_RED_PORT &= ~(1 << LED_RED_BIT); // Set pin low to turn LED on
 }
 
 void led_redOff(void) {
-    LED_RED_PORT &= ~(1 << LED_RED_BIT); // Clear bit
+    LED_RED_PORT |= (1 << LED_RED_BIT);  // Set pin high to turn LED off
 }
 
 void led_yellowInit(void) {
@@ -44,11 +44,11 @@ void led_yellowToggle(void) {
 }
 
 void led_yellowOn(void) {
-    LED_YELLOW_PORT |= (1 << LED_YELLOW_BIT);
+    LED_YELLOW_PORT &= ~(1 << LED_YELLOW_BIT); // Set pin low to turn LED on
 }
 
 void led_yellowOff(void) {
-    LED_YELLOW_PORT &= ~(1 << LED_YELLOW_BIT);
+    LED_YELLOW_PORT |= (1 << LED_YELLOW_BIT);  // Set pin high to turn LED off
 }
 
 void led_greenInit(void) {
@@ -60,9 +60,9 @@ void led_greenToggle(void) {
 }
 
 void led_greenOn(void) {
-    LED_GREEN_PORT |= (1 << LED_GREEN_BIT);
+    LED_GREEN_PORT &= ~(1 << LED_GREEN_BIT); // Set pin low to turn LED on
 }
 
 void led_greenOff(void) {
-    LED_GREEN_PORT &= ~(1 << LED_GREEN_BIT);
+    LED_GREEN_PORT |= (1 << LED_GREEN_BIT);  // Set pin high to turn LED off
 }
