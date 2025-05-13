@@ -1,13 +1,24 @@
 #include "ses_adc.h"
 #include <avr/io.h>
+#include <stdint.h>
+#include <util/delay.h>
+
+
+#define ADC_TEMP_LOW      100  // 10 °C in tenths of a degree
+#define ADC_TEMP_HIGH     300  // 30 °C in tenths of a degree
+#define B_CONSTANT        3435      // B constant of the thermisto
+#define RN                10000     // Resistance of the thermistor
+#define RP                15000     // Pull-up resistor
+#define V_REF             5.0       // Reference voltage in volts
+
 
 
 void adc_init(void) {
     // Configure the data direction registers for potentiometer, temperature, and light sensors
-    DDRC &= ~((1 << ADC_LIGHT_CH) | (1 << ADC_POTI_CH) | (1 << ADC_TEMP_CH));
+    DDRF &= ~((1 << ADC_LIGHT_CH) | (1 << ADC_POTI_CH) | (1 << ADC_TEMP_CH));
 
     // Deactivate internal pull-up resistors
-    PORTC &= ~((1 << ADC_LIGHT_CH) | (1 << ADC_POTI_CH) | (1 << ADC_TEMP_CH));
+    PORTF &= ~((1 << ADC_LIGHT_CH) | (1 << ADC_POTI_CH) | (1 << ADC_TEMP_CH));
 
     // Disable power reduction mode for the ADC module
     PRR0 &= ~(1 << PRADC);
@@ -54,6 +65,10 @@ uint16_t adc_read(uint8_t adc_channel) {
  * Read the current temperature
  * @return Temperature in tenths of degree celsius
  */
-int16_t adc_getTemperature(void);
+int16_t adc_getTemperature(void){
 
+int32_t adc = adc_read(ADC_TEMP_CH);
 
+return (int16_t)(((adc - ADC_TEMP_LOW) * (ADC_TEMP_HIGH - ADC_TEMP_LOW))/ (ADC_TEMP_HIGH - ADC_TEMP_LOW)) + ADC_TEMP_LOW;
+
+}
