@@ -43,8 +43,8 @@ int main(void) {
         
         display_update();
         */
-        //led_redOn();
-        led_redToggle();
+        led_redOff();
+        led_greenToggle();
         //led_greenOn();
         _delay_ms(500);
         /*

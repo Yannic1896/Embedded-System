@@ -46,21 +46,20 @@ _Bool button_isRotaryButtonPressed(void){
     return !(PINB & (1 << BUTTON_ROTARY_BIT));      // Return true if button pushed
 }
 
-ISR(PCINT0_vect)
-{// execute callbacks here
+ISR(PCINT0_vect){// execute callbacks here
     uint8_t currentState = PINB;
     uint8_t changed = currentState ^ lastButtonState;  // XOR to find changed bits
     lastButtonState = currentState;
 
     // Check Push Button
-    if ((changed & (1 << BUTTON_PUSH_BIT)) && (PCMSK0 & (1 << BUTTON_PUSH_BIT))) {      // Check if Push button has changed and corresponding interrupt is unmasked
+    if ((changed & (1 << BUTTON_PUSH_BIT)) && (PCMSK0 & (1 << BUTTON_PUSH_BIT)) && (currentState & (1 << BUTTON_PUSH_BIT))) {      // Check if Push button has changed and corresponding interrupt is unmasked
         if (pushButtonCallback != NULL) {     // Check if callback is set
             pushButtonCallback();
         }
     }
 
     // Check Rotary Button
-    if ((changed & (1 << BUTTON_ROTARY_BIT)) && (PCMSK0 & (1 << BUTTON_ROTARY_BIT))) {
+    if ((changed & (1 << BUTTON_ROTARY_BIT)) && (PCMSK0 & (1 << BUTTON_ROTARY_BIT)) && (currentState & (1 << BUTTON_ROTARY_BIT))) {
         if (rotaryButtonCallback != NULL) {
             rotaryButtonCallback();
         }
