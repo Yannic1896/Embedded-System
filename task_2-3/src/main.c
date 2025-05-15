@@ -17,6 +17,7 @@ int main(void) {
     uint8_t seconds = 0;
 
     while(1){
+        /*
         fprintf(serialout, "Your USB output goes here\n");
 
         // Check Buttons
@@ -39,19 +40,20 @@ int main(void) {
         // Display seconds since MCU reset
         display_setCursor(0,0); // Set cursor to column 0, row 0
         fprintf(displayout, "seconds: %d", seconds);
-
+        
         display_update();
+        */
         //led_redOn();
-        //led_yellowToggle();
+        led_redToggle();
         //led_greenOn();
         _delay_ms(500);
-
+        /*
         static uint8_t halfSecondCounter = 0;
         halfSecondCounter++;
         if (halfSecondCounter >= 2) {
             seconds++;
             halfSecondCounter = 0;
-        }
+        }*/
 
     }
 
