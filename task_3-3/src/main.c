@@ -4,6 +4,12 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+void toggleRedLED(void) {
+    led_redToggle();
+}
+void toggleGreenLED(void) {
+    led_greenToggle();
+}
 
 int main(void) {
     // Initialize LEDs
@@ -12,11 +18,11 @@ int main(void) {
     sei();
 
     // Initialize buttons
-    button_init(true);
+    button_init(false);
 
     // Set button callbacks
-    button_setRotaryButtonCallback(led_redToggle);   // Rotary button toggles red LED
-    button_setPushButtonCallback(led_greenToggle);  // Push button toggles green LED
+    button_setRotaryButtonCallback(toggleRedLED);   // Rotary button toggles red LED
+    button_setPushButtonCallback(toggleGreenLED);  // Push button toggles green LED
 
     // Main loop
     while (1) {
