@@ -7,19 +7,17 @@
 
 void onPushButtonPressed(void) {
     led_redToggle();
-    fprintf(serialout, "red led toggled");
 }
 
 void onRotaryButtonPressed(void) {
     led_greenToggle();
-    fprintf(serialout, "green led toggled");
 }
 
 int main(void) {
     led_redInit();
     led_greenInit();
-    button_init();
-    usbserial_init();
+    button_init(false);
+
     sei();
 
     button_setPushButtonCallback(onPushButtonPressed);
