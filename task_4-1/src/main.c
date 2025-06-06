@@ -37,6 +37,7 @@ int main(void) {
     
     // Initialize scheduler
     scheduler_init();
+    sei();
     
     // Add tasks to scheduler
     scheduler_add(&blinkRedTask);
