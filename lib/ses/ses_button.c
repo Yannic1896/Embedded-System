@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include "ses_button.h"
 #include <stddef.h>
+#include "ses_display.h"
+#include "ses_usbserial.h"
 
 // Button wiring on SES board
 #define BUTTON_ROTARY_PIN   PINB
@@ -109,6 +111,7 @@ void button_checkState()
         !(lastDebouncedState & BUTTON_DEBOUNCE_POS_PUSHBUTTON) && 
         pushButtonCallback != NULL) {
         pushButtonCallback();
+        fprintf(serialout, "Push\n");
     }
 
     // Check for rotary button press (transition from not pressed to pressed)

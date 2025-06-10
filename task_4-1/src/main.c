@@ -1,7 +1,9 @@
 #include "ses_scheduler.h"
 #include "ses_led.h"
+#include "ses_button.h"
 #include <avr/io.h>
 #include <stddef.h>
+#include "ses_display.h"
 
 // Task function prototypes
 void blink_red(void* param);
@@ -34,9 +36,15 @@ int main(void) {
     // Initialize hardware
     led_redInit();
     led_yellowInit();
+    display_init();
+    
+    // Initially turn LED's off
     led_redOff();
     led_yellowOff();
     
+    display_setCursor(0,0);
+    fprintf(displayout, "Disp\n");
+    display_update();
     // Initialize scheduler
     scheduler_init();
     
