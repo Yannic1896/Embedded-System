@@ -13,6 +13,7 @@ typedef enum{
     YELLOW
 }led_color;
 
+//Set LED toggle color
 static led_color toggle_color = GREEN;
 
 void led_toggle_task(void *param);
@@ -26,28 +27,28 @@ volatile uint16_t stopwatch_time = 0;
 task_descriptor_t blinkTask = {
     .task = &led_toggle_task,   
     .param = &toggle_color,
-    .expire = 2000,
+    .expire = 2000, //2s toggle
     .period = 2000      
 };
 
 task_descriptor_t buttonDebounce = {
     .task = &button_checkState,   
     .param = NULL,
-    .expire = 5,
+    .expire = 5, //check button state every 5ms
     .period = 5 
 };
 
 task_descriptor_t turnOffYellowTask = {
     .task = &turn_off_yellow,
     .param = NULL,
-    .expire = 5000,
+    .expire = 5000, //5s toggle 
     .period = 0
 };
 
 task_descriptor_t startStopwatchTask = {
     .task = &stopwatch,
     .param = NULL,
-    .expire = 100,
+    .expire = 100, //Update stopwatch every 100ms
     .period = 100
 };
 
@@ -66,12 +67,13 @@ void led_toggle_task(void *param) {
             led_yellowToggle();
             break;
         default:
-            // Do nothing or log error
+            // Do nothing
             break;
     }
 }
 
 void onPushButtonPressed(void) {
+    // Switch led status when push button is pressed 
     if (!yellow_led_on) {
         led_yellowOn();
         yellow_led_on = true;
@@ -79,12 +81,14 @@ void onPushButtonPressed(void) {
     } else {
         led_yellowOff();
         yellow_led_on = false;
+        //Reset scheduler for next turn
         scheduler_remove(&turnOffYellowTask);
         turnOffYellowTask.expire = 5000;
     }
 }
 
 void onRotaryButtonPressed(void) {
+    //Reset the stopwatch when rotary button is pressed
     if(!stopwatch_running) {
         scheduler_add(&startStopwatchTask);
         stopwatch_running = true;
@@ -97,7 +101,6 @@ void onRotaryButtonPressed(void) {
 
 void stopwatch(void *param) {
     if (stopwatch_running){
-        fprintf(serialout, "Rotary\n");
         stopwatch_time++;
         display_setCursor(0,0);
         fprintf(displayout, "Time: %2u.%1u s", stopwatch_time / 10, stopwatch_time % 10);
@@ -119,7 +122,8 @@ int main(void) {
     led_greenInit();
     display_init();
     button_init(true);
-    
+
+    //set Callback functions
     button_setPushButtonCallback(onPushButtonPressed);
     button_setRotaryButtonCallback(onRotaryButtonPressed);
 
