@@ -97,7 +97,7 @@ void onRotaryButtonPressed(void) {
 
 void stopwatch(void *param) {
     if (stopwatch_running){
-        fprintf(serialout, "Rotary\n");
+        //fprintf(serialout, "Rotary\n");
         stopwatch_time++;
         display_setCursor(0,0);
         fprintf(displayout, "Time: %2u.%1u s", stopwatch_time / 10, stopwatch_time % 10);
