@@ -18,6 +18,8 @@ void led_toggle_task(void *param);
 void turn_off_yellow(void * param);
 
 bool yellow_led_on = false;
+bool stopwatch_running = false;
+volatile uint16_t stopwatch_time = 0;
 
 task_descriptor_t blinkTask = {
     .task = &led_toggle_task,   
@@ -39,6 +41,14 @@ task_descriptor_t turnOffYellowTask = {
     .expire = 5000,
     .period = 0
 };
+
+task_descriptor_t startStopwatchTask = {
+    .task = &stopwatch,
+    .param = NULL,
+    .expire = 100,
+    .period = 100
+};
+
 
 void led_toggle_task(void *param) {
     led_color color = *((led_color*)param);
@@ -68,6 +78,23 @@ void onPushButtonPressed(void) {
         led_yellowOff();
         yellow_led_on = false;
         scheduler_remove(&turnOffYellowTask);
+    }
+}
+
+void onRotaryButtonPressed(void) {
+    if(!stopwatch_running) {
+        scheduler_add(&startStopwatchTask);
+    }else {
+        scheduler_remove(&startStopwatchTask);
+    }
+}
+
+void stopwatch(void) {
+    if (stopwatch_running){
+        stopwatch_time++;
+        display_setCursor(0,0);
+        fprintf(displayout, "Time: %2u.%1u s", stopwatch_time / 10, stopwatch_time % 10);
+        display_update();
     }
 }
 
