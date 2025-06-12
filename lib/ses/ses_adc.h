@@ -13,6 +13,8 @@
 #define ADC_INVALID_CHANNEL    0xFFFF
 #define ADC_PRESCALE ((1 << ADPS2) | (1 << ADPS1)) // Prescaler of 64 for 16 MHz CPU clock
 
+#define ADC_PRESCALE ((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0))
+
 enum ADCChannels {
   ADC_LIGHT_CH = 0,        /* ADC0 */
   ADC_POTI_CH  = 6,        /* ADC6 */

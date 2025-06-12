@@ -15,7 +15,11 @@
 #define BUTTON_PUSH_BIT     4
 
 #define BUTTON_NUM_DEBOUNCE_CHECKS 5
+<<<<<<< HEAD
 #define BUTTON_DEBOUNCE_POS_PUSHBUTTON 0x01
+=======
+#define BUTTON_DEBOUNCE_POS_PUSHBUTTON 0x01 
+>>>>>>> Jannis
 #define BUTTON_DEBOUNCE_POS_ROTARYBUTTON 0x02
 
 // Function pointers for button callbacks
@@ -133,4 +137,8 @@ ISR(PCINT0_vect) {
             pushButtonCallback(); // Execute push button callback
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> Jannis

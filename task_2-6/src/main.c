@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include "ses_button.h"
 #include <util/delay.h>
 #include <avr/io.h>
@@ -48,3 +49,9 @@ int main(void) {
 
     return 0;
 }
+=======
+
+int main(void) {
+
+}
+>>>>>>> Jannis
