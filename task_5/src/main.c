@@ -5,12 +5,30 @@
 #include "ses_fan.h"
 #include "ses_adc.h"
 #include "ses_scheduler.h"
+#include <stddef.h>
 
 #define POT_ADC_CHANNEL 
 
 volatile uint8_t fanOn = 0;
 
-void toggleFanTask(void) {
+void toggleFanTask(void *param);
+void potTask(void* param);
+
+task_descriptor_t ToggleFan = {
+    .task = &toggleFanTask,
+    .param = NULL,
+    .expire = 10, // 2s toggle
+    .period = 10
+};
+
+task_descriptor_t PotTask = {
+    .task = &potTask,
+    .param = NULL,
+    .expire = 50, // Read potentiometer every 50ms
+    .period = 50
+};
+
+void toggleFanTask(void *param) {
     static uint8_t lastButtonState = 0;
     uint8_t currentState = button_isPushButtonPressed();
 
@@ -29,9 +47,9 @@ void toggleFanTask(void) {
     lastButtonState = currentState;
 }
 
-void potTask(void) {
+void potTask(void *param) {
     if (fanOn) {
-        uint16_t potValue = adc_read(POT_ADC_CHANNEL); // 0..1023
+        uint16_t potValue = adc_read(ADC_POTI_CH);
         uint8_t duty = potValue >> 2; // Scale 10-bit ADC to 8-bit PWM (0..255)
         fan_setDutyCycle(duty);
     } else {
@@ -49,8 +67,8 @@ int main(void) {
     scheduler_init();
 
     // Schedule tasks: button check every 10ms, pot read every 50ms
-    scheduler_setTask(toggleFanTask, 10);
-    scheduler_setTask(potTask, 50);
+    scheduler_add(&ToggleFan);
+    scheduler_add(&PotTask);
 
     sei(); // Enable global interrupts
 
