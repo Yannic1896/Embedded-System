@@ -2,12 +2,15 @@
 #include "ses_fan.h"
 
 #define FAN_DDR   DDRD
+#define CONTROL_DDR DDRC
 #define FAN_PORT  PORTD
 #define FAN_PIN   PD4 
+#define FAN_CONTROL_PIN PC6
 
 void fan_init(void) {
     // Set PD2 (OC3A) as output
     FAN_DDR |= (1 << FAN_PIN);
+    CONTROL_DDR |= (1 << FAN_CONTROL_PIN); // Set PC6 as output to indicate fan connection
 
     // Enable Timer3 by clearing PRTIM3 in PRR1
     PRR1 &= ~(1 << PRTIM3);
@@ -31,14 +34,14 @@ void fan_setDutyCycle(uint8_t dc) {
 }
 
 void fan_enable(void) {
-    PORTD |= (1 << FAN_PIN); // Set PD2 high to start PWM output
+    FAN_PORT |= (1 << FAN_PIN); // Set PD4 high to start PWM output
     // Power on: set output high (if needed, or just ensure PWM is running)
     // If fan power is controlled by another pin, set it here.
     // For pure PWM, nothing extra is needed.
 }
 
 void fan_disable(void) {
-    PORTD &= ~(1 << FAN_PIN); // Set PD2 low to stop PWM output
+    FAN_PORT &= ~(1 << FAN_PIN); // Set PD2 low to stop PWM output
     // Set duty cycle to 0 (fan off)
     OCR3A = 0;
     // Optionally, power off the fan supply if controlled by another pin.
