@@ -53,9 +53,9 @@ ISR(TIMER0_COMPA_vect) {
     }
 }
 
-ISR(TIMER1_COMPA_vect) {
+/*ISR(TIMER1_COMPA_vect) {
     if (timer1_callback != 0) {
         timer1_callback();
     }
-}
+}*/
 

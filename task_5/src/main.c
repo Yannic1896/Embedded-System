@@ -49,7 +49,7 @@ void potTask(void *param) {
         fan_setDutyCycle(duty);
         uint16_t rpm = 0;
         rpm = fanspeed_getRecent();
-        printf(serialout, "RPM: %u\nDuty:  %u\n", rpm, duty);
+        fprintf(serialout, "RPM: %u\nDuty:  %u\n", rpm, duty);
     } else {
         fan_setDutyCycle(0);
     }
@@ -59,14 +59,14 @@ int main(void) {
     // Init hardware
     led_redInit();
     led_redOff();
-    button_init(true); // false: use interrupt/scheduler, not timer debounce
+    button_init(false); // false: use interrupt/scheduler, not timer debounce
     fan_init();
     adc_init();
     scheduler_init();
 
     usbserial_init();
     
-
+    fanspeed_init();
     button_setPushButtonCallback(toggleFan);
 
     // Schedule tasks: button check every 10ms, pot read every 50ms
@@ -75,7 +75,8 @@ int main(void) {
 
     sei(); // Enable global interrupts
 
-    
+    // RPM min: 451
+    // RPM max: 2176
     scheduler_run();
     
 
