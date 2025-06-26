@@ -8,5 +8,6 @@ void fanspeed_init(void);
 
 uint16_t fanspeed_getRecent(void);
 
+uint16_t fanspeed_getFiltered(void);
 
 #endif

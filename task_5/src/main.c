@@ -5,14 +5,22 @@
 #include "ses_fan.h"
 #include "ses_adc.h"
 #include "ses_scheduler.h"
+#include "ses_display.h"
 #include <stddef.h>
 #include "ses_usbserial.h"
 #include "ses_fanspeed.h"
 
 #define POT_ADC_CHANNEL 
 
+// define module-private variables
+static uint16_t fanspeed = 0;           
+static uint16_t filteredFanspeed = 0;           
+static uint8_t dutycycle = 0;           
+
+
 void toggleFanTask(void *param);
 void potTask(void* param);
+void displayCurrentRPM(void* param);
 
 bool fan_running = false;
 
@@ -28,6 +36,13 @@ task_descriptor_t buttonDebounce = {
     .param = NULL,
     .expire = 5, // check button state every 5ms
     .period = 5
+};
+
+task_descriptor_t displayFanspeed = {
+    .task = &displayCurrentRPM,
+    .param = NULL,
+    .expire = 15, 
+    .period = 1000   // update display every 1s
 };
 
 void toggleFan(void *param) {
@@ -49,15 +64,26 @@ void potTask(void *param) {
         fan_setDutyCycle(duty);
         uint16_t rpm = 0;
         rpm = fanspeed_getRecent();
-        fprintf(serialout, "RPM: %u\nDuty:  %u\n", rpm, duty);
+        //fprintf(serialout, "RPM: %u\nDuty:  %u\n", rpm, duty);
+        dutycycle = duty;
     } else {
         fan_setDutyCycle(0);
+        dutycycle = 0;
     }
+}
+
+void displayCurrentRPM(void *param) {
+    fanspeed = fanspeed_getRecent();
+    filteredFanspeed = fanspeed_getFiltered();
+    display_setCursor(0, 0);
+    fprintf(displayout,"RPM:  %u\nFiltered:  %u\nDuty:  %u\n", fanspeed, filteredFanspeed, dutycycle);
+    display_update();
 }
 
 int main(void) {
     // Init hardware
     led_redInit();
+    led_yellowInit();
     led_redOff();
     button_init(false); // false: use interrupt/scheduler, not timer debounce
     fan_init();
@@ -67,11 +93,13 @@ int main(void) {
     usbserial_init();
     
     fanspeed_init();
+
     button_setPushButtonCallback(toggleFan);
 
     // Schedule tasks: button check every 10ms, pot read every 50ms
     scheduler_add(&buttonDebounce);
     scheduler_add(&PotTask);
+    scheduler_add(&displayFanspeed);
 
     sei(); // Enable global interrupts
 
