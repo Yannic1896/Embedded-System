@@ -26,6 +26,19 @@ typedef struct task_descriptor_s {
 } task_descriptor_t;
 
 
+typedef struct {
+   uint8_t hour;
+   uint8_t minute;
+   uint8_t second;
+   uint16_t milli;
+} time_t;
+
+/**
+ * Milliseconds per day = 24*60*60*1000 = 86.400.000
+ * Define system time variable
+ */
+typedef uint32_t system_time_t;  // Can store values up to 4,294,967,295
+
 /* FUNCTION PROTOTYPES *******************************************************/
 
 /**
@@ -59,7 +72,16 @@ bool scheduler_add(task_descriptor_t * td);
  *
  * @param td	pointer to task descriptor to remove
  * */
+
 void scheduler_remove(const task_descriptor_t * td);
+
+system_time_t scheduler_getTime(void);
+
+void scheduler_setTime(system_time_t time);
+
+system_time_t timeToSystemTime(const time_t* t);
+
+void systemTimeToTime(system_time_t sysTime, time_t* t);
 
 
 #endif /* SCHEDULER_H_ */
