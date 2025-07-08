@@ -1,12 +1,83 @@
 #include <avr/io.h>
 #include <util/delay.h>
+#include "ses_fsm.h"
+#include "ses_scheduler.h"
+#include "ses_button.h"
+#include "ses_led.h"
+#include "ses_display.h"
+#include <stddef.h>
 
-typedef enum {
-    STATE_UNINITIALIZED,
-    STATE_SET_HOUR,
-    STATE_SET_MINUTE,
-    STATE_NORMAL,
-    STATE_SET_ALARM_HOUR,
-    STATE_SET_ALARM_MINUTE,
-    STATE_ALARM_ACTIVE
-} ClockState_t;
+static fsm_t alarmFSM;
+
+task_descriptor_t buttonDebounce = {
+    .task = &button_checkState,
+    .param = NULL,
+    .expire = 5, // check button state every 5ms
+    .period = 5
+};
+
+
+typedef struct {
+    fsm_t* fsm;
+    event_t event;
+} fsm_dispatch_params_t;
+
+void fsm_dispatchTaskFunction(void* param) {
+    fsm_dispatch_params_t* args = (fsm_dispatch_params_t*)param;
+    fsm_dispatch(args->fsm, &args->event);
+}
+
+void pushbuttonPressed() {
+    static task_descriptor_t pushTask;
+    static fsm_dispatch_params_t pushParams;
+
+    pushParams.fsm = &alarmFSM;
+    pushParams.event.signal = PUSHBUTTON_PRESSED;
+
+    pushTask.task = fsm_dispatchTaskFunction;
+    pushTask.param = &pushParams;
+    pushTask.expire = 0;
+    pushTask.period = 0;
+
+    scheduler_add(&pushTask);
+}
+
+void rotarybuttonPressed() {
+    static task_descriptor_t rotaryTask;
+    static fsm_dispatch_params_t rotaryParams;
+
+    rotaryParams.fsm = &alarmFSM;
+    rotaryParams.event.signal = ROTARYBUTTON_PRESSED;
+
+    rotaryTask.task = fsm_dispatchTaskFunction;
+    rotaryTask.param = &rotaryParams;
+    rotaryTask.expire = 0;
+    rotaryTask.period = 0;
+
+    scheduler_add(&rotaryTask);
+}
+
+
+int main(void){
+    
+    button_init(false); // false: use interrupt/scheduler, not timer debounce
+    display_init();
+    display_clear();
+    scheduler_init();
+    led_redInit();
+    led_yellowInit();
+    led_redOff();
+    led_yellowOff();
+
+    fsm_init(&alarmFSM, state_uninitialized_setHour);
+
+    button_setPushButtonCallback(&pushbuttonPressed);
+    button_setRotaryButtonCallback(&rotarybuttonPressed);
+
+    scheduler_add(&buttonDebounce);
+
+    scheduler_run();
+
+
+}
+
