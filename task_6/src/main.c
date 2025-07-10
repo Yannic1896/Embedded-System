@@ -27,11 +27,10 @@ typedef struct {
 void fsm_dispatchTaskFunction(void* param) {
     fsm_dispatch_params_t* args = (fsm_dispatch_params_t*)param;
     fsm_dispatch(args->fsm, &args->event);
-    
 }
 
 void checkAlarmTimeMatch(void* param){
-
+    
 }
 
 void pushbuttonPressed() {

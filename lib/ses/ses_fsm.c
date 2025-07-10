@@ -8,6 +8,7 @@
 void toggleRedLED(void* param);
 void turnOffRedLED(void* param);
 void refreshDisplay(void* param);
+void checkAlarmMatch(void* param);
 
 task_descriptor_t blinkLED = {
     .task = &toggleRedLED,
@@ -27,6 +28,13 @@ task_descriptor_t updateDisplay = {
     .task = &refreshDisplay,
     .param = NULL,
     .expire = 1, // check button state every 5ms
+    .period = 1000
+};
+
+task_descriptor_t alarmMatchCheck = {
+    .task = &checkAlarmMatch,
+    .param = NULL,   // Will assign fsm in ENTRY
+    .expire = 1,
     .period = 1000
 };
 
@@ -92,6 +100,9 @@ fsm_return_status_t state_normalOperation(fsm_t *fsm, const event_t *event) {
     switch (event->signal) {
         case ENTRY:
             scheduler_add(&updateDisplay);
+
+            alarmMatchCheck.param = fsm;
+            scheduler_add(&alarmMatchCheck);
             return RET_HANDLED;
 
         case ROTARYBUTTON_PRESSED:
@@ -111,6 +122,7 @@ fsm_return_status_t state_normalOperation(fsm_t *fsm, const event_t *event) {
             return RET_IGNORED;
         case EXIT:
             scheduler_remove(&updateDisplay);
+            scheduler_remove(&alarmMatchCheck);
             return RET_HANDLED;
         default:
             return RET_IGNORED;
@@ -200,8 +212,8 @@ void toggleRedLED(void* param){
 }
 
 void turnOffRedLED(void* param){
-    led_redOff();
     scheduler_remove(&blinkLED);
+    led_redOff();
 }
 
 void refreshDisplay(void* param){
@@ -217,6 +229,28 @@ void refreshDisplay(void* param){
     );
     display_update();
 }
+
+void checkAlarmMatch(void* param) {
+    fsm_t* fsm = (fsm_t*)param;
+
+    if (!fsm || !fsm->isAlarmEnabled || fsm->state != state_normalOperation) {
+        return;
+    }
+
+    time_t now;
+    system_time_t sysTime = scheduler_getTime();
+    systemTimeToTime(sysTime, &now);
+
+    if (now.hour == fsm->alarmTime.hour &&
+        now.minute == fsm->alarmTime.minute &&
+        now.second == fsm->alarmTime.second) {
+
+        static const event_t matchEvent = {.signal = TIME_MATCH};
+        fsm_dispatch(fsm, &matchEvent);  // or use scheduler if needed
+    }
+}
+
+
 
 // --- FSM Dispatcher & Initialization ---
 /* dispatches events to state machine, called in application*/
