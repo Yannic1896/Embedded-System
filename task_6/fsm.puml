@@ -8,53 +8,28 @@ skinparam state {
 [*] --> Uninitialized
 
 state Uninitialized {
-    [*] --> SettingHour
-    SettingHour --> SettingMinute : PushButton pressed
-    SettingMinute --> [*] : PushButton pressed
+    SetHour --> SetMinute : PushButton pressed
+    SetHour --> SetHour : RotaryButton pressed/++Hour
+    SetMinute --> SetMinute: RotaryButton pressed/++Minute
+    [*] --> SetHour
 }
+    Uninitialized --> NormalOperation : PushButton pressed
 
-Uninitialized --> NormalOperation : Time set complete
-
-state NormalOperation {
-    [*] --> DisplayTime
-    DisplayTime --> AlarmOnOff : RotaryButton pressed
-    DisplayTime --> SettingAlarmTime : PushButton pressed
+    NormalOperation --> NormalOperation : RotaryButton pressed/AlarmEnabled or disabled
+    NormalOperation --> SetAlarmTime : PushButton pressed
+    NormalOperation: Toggle green LED
     
-    state SettingAlarmTime {
-        [*] --> SettingAlarmHour
-        SettingAlarmHour --> SettingAlarmMinute : PushButton pressed
-        SettingAlarmMinute --> [*] : PushButton pressed
+    state SetAlarmTime {
+        [*] --> SetAlarmHour
+        SetAlarmHour --> SetAlarmMinute : PushButton pressed
+        SetAlarmHour --> SetAlarmHour : RotaryButton pressed/++Hour
+        SetAlarmMinute --> NormalOperation : PushButton pressed
+        SetAlarmMinute --> SetAlarmMinute : RotaryButton pressed/++Minute
     }
     
-    DisplayTime --> AlarmTriggered : Alarm enabled AND time matches
-}
+    NormalOperation --> AlarmTriggered : Alarm enabled AND time matches
+    AlarmTriggered : Toggle red LED
+    AlarmTriggered --> NormalOperation : Any button pressed or 5s timeout
 
-state AlarmTriggered {
-    [*] --> FlashingRedLED
-    FlashingRedLED --> DisplayTime : Any button pressed OR 5 seconds elapsed
-}
-
-note right of Uninitialized
-    Display shows "--:--"
-    Second line prompts to set time
-end note
-
-note right of NormalOperation
-    Display shows "HH:MM:SS"
-    Green LED blinks with seconds
-    Yellow LED shows alarm status
-end note
-
-note right of SettingAlarmTime
-    Display shows "AL:HH:MM"
-    Setting process similar to
-    initial time setting
-end note
-
-note right of AlarmTriggered
-    Red LED flashes at 4Hz
-    Alarm remains enabled after
-    stopping
-end note
 
 @enduml

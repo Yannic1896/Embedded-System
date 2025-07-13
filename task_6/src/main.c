@@ -10,30 +10,29 @@
 #include <stddef.h>
 
 static fsm_t alarmFSM;
-//#define _DEBUG_SERIAL_
+// #define _DEBUG_SERIAL_
 
 task_descriptor_t buttonDebounce = {
     .task = &button_checkState,
     .param = NULL,
-    .expire = 5, // check button state every 5ms
-    .period = 5
+    .expire = 5,
+    .period = 5 // check button state every 5ms
 };
 
-typedef struct {
-    fsm_t* fsm;
+typedef struct
+{
+    fsm_t *fsm;
     event_t event;
 } fsm_dispatch_params_t;
 
-void fsm_dispatchTaskFunction(void* param) {
-    fsm_dispatch_params_t* args = (fsm_dispatch_params_t*)param;
+void fsm_dispatchTaskFunction(void *param)
+{
+    fsm_dispatch_params_t *args = (fsm_dispatch_params_t *)param;
     fsm_dispatch(args->fsm, &args->event);
 }
 
-void checkAlarmTimeMatch(void* param){
-    
-}
-
-void pushbuttonPressed() {
+void pushButtonPressed()
+{
     static task_descriptor_t pushTask;
     static fsm_dispatch_params_t pushParams;
 
@@ -48,10 +47,11 @@ void pushbuttonPressed() {
     scheduler_add(&pushTask);
 }
 
-void rotarybuttonPressed() {
+void rotaryButtonPressed()
+{
     static task_descriptor_t rotaryTask;
     static fsm_dispatch_params_t rotaryParams;
-    
+
     rotaryParams.fsm = &alarmFSM;
     rotaryParams.event.signal = ROTARYBUTTON_PRESSED;
 
@@ -63,8 +63,8 @@ void rotarybuttonPressed() {
     scheduler_add(&rotaryTask);
 }
 
-
-int main(void){
+int main(void)
+{
     sei();
     button_init(false); // false: use interrupt/scheduler, not timer debounce
     usbserial_init();
@@ -78,13 +78,10 @@ int main(void){
     led_yellowOff();
     fsm_init(&alarmFSM, state_uninitialized_setHour);
 
-    button_setPushButtonCallback(pushbuttonPressed);
-    button_setRotaryButtonCallback(rotarybuttonPressed);
+    button_setPushButtonCallback(pushButtonPressed);
+    button_setRotaryButtonCallback(rotaryButtonPressed);
 
     scheduler_add(&buttonDebounce);
 
     scheduler_run();
-
-
 }
-

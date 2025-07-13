@@ -4,252 +4,263 @@
 #include "ses_led.h"
 #include <avr/io.h>
 
-
-void toggleRedLED(void* param);
-void turnOffRedLED(void* param);
-void refreshDisplay(void* param);
-void checkAlarmMatch(void* param);
+void toggleRedLED(void *param);
+void turnOffRedLED(void *param);
+void refreshDisplay(void *param);
+void checkAlarmMatch(void *param);
 
 // --- Task Descriptor Declarations ---
 task_descriptor_t blinkLED = {
     .task = &toggleRedLED,
     .param = NULL,
-    .expire = 1, 
-    .period = 250
-};
+    .expire = 1,
+    .period = 250};
 
 task_descriptor_t stopAlarm = {
     .task = &turnOffRedLED,
     .param = NULL,
-    .expire = 5000, 
-    .period = 0
-};
+    .expire = 5000,
+    .period = 0};
 
 task_descriptor_t updateDisplay = {
     .task = &refreshDisplay,
     .param = NULL,
-    .expire = 1, 
-    .period = 1000
-};
+    .expire = 1,
+    .period = 1000};
 
 task_descriptor_t alarmMatchCheck = {
     .task = &checkAlarmMatch,
-    .param = NULL,   
+    .param = NULL,
     .expire = 1,
-    .period = 1000
-};
+    .period = 1000};
 
 // --- State Function Declarations ---
-fsm_return_status_t state_uninitialized_setHour(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            display_setCursor(0,0);
-            fprintf(displayout,"00:00\nSet Hour");
-            display_update();
-            fsm->timeSet.hour = 0;
-            return RET_HANDLED;
+fsm_return_status_t state_uninitialized_setHour(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        display_setCursor(0, 0);
+        fprintf(displayout, "00:00\nSet Hour");
+        display_update();
+        fsm->timeSet.hour = 0;
+        return RET_HANDLED;
 
-        case ROTARYBUTTON_PRESSED:
-            fsm->timeSet.hour = (fsm->timeSet.hour + 1) % 24;
-            display_clear();
-            display_setCursor(0,0);
-            fprintf(displayout, "%02d:00\nSet Hour", fsm->timeSet.hour);
-            display_update();
-            return RET_HANDLED;
+    case ROTARYBUTTON_PRESSED:
+        fsm->timeSet.hour = (fsm->timeSet.hour + 1) % 24;
+        display_clear();
+        display_setCursor(0, 0);
+        fprintf(displayout, "%02d:00\nSet Hour", fsm->timeSet.hour);
+        display_update();
+        return RET_HANDLED;
 
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_uninitialized_setMinute;
-            return RET_TRANSITION;
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_uninitialized_setMinute;
+        return RET_TRANSITION;
 
-        case EXIT:
-            return RET_HANDLED;
+    case EXIT:
+        return RET_HANDLED;
     }
     return RET_IGNORED;
 }
 
-fsm_return_status_t state_uninitialized_setMinute(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            display_clear();
-            display_setCursor(0,0);
-            fprintf(displayout, "%02d:00\nSet Minute", fsm->timeSet.hour);
-            display_update();
-            fsm->timeSet.minute = 0;
-            fsm->timeSet.second = 0;
-            fsm->timeSet.milli = 0;
-            return RET_HANDLED;
+fsm_return_status_t state_uninitialized_setMinute(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        display_clear();
+        display_setCursor(0, 0);
+        fprintf(displayout, "%02d:00\nSet Minute", fsm->timeSet.hour);
+        display_update();
+        fsm->timeSet.minute = 0;
+        fsm->timeSet.second = 0;
+        fsm->timeSet.milli = 0;
+        return RET_HANDLED;
 
-        case ROTARYBUTTON_PRESSED:
-            display_clear();
-            display_setCursor(0,0);
-            fsm->timeSet.minute = (fsm->timeSet.minute + 1) % 60;
-            fprintf(displayout, "%02d:%02d\nSet Minute", fsm->timeSet.hour, fsm->timeSet.minute);
-            display_update();
-            return RET_HANDLED;
+    case ROTARYBUTTON_PRESSED:
+        display_clear();
+        display_setCursor(0, 0);
+        fsm->timeSet.minute = (fsm->timeSet.minute + 1) % 60;
+        fprintf(displayout, "%02d:%02d\nSet Minute", fsm->timeSet.hour, fsm->timeSet.minute);
+        display_update();
+        return RET_HANDLED;
 
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_normalOperation;
-            system_time_t sysTime = timeToSystemTime(&fsm->timeSet);
-            scheduler_setTime(sysTime);
-            return RET_TRANSITION;
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_normalOperation;
+        system_time_t sysTime = timeToSystemTime(&fsm->timeSet);
+        scheduler_setTime(sysTime);
+        return RET_TRANSITION;
 
-        case EXIT:
-            return RET_HANDLED;
+    case EXIT:
+        return RET_HANDLED;
     }
     return RET_IGNORED;
 }
 
-fsm_return_status_t state_normalOperation(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            scheduler_add(&updateDisplay);
+fsm_return_status_t state_normalOperation(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        scheduler_add(&updateDisplay);
 
-            alarmMatchCheck.param = fsm;
-            scheduler_add(&alarmMatchCheck);
-            //scheduler_remove(&blinkLED);
-            return RET_HANDLED;
+        alarmMatchCheck.param = fsm;
+        scheduler_add(&alarmMatchCheck);
+        // scheduler_remove(&blinkLED);
+        return RET_HANDLED;
 
-        case ROTARYBUTTON_PRESSED:
-            fsm->isAlarmEnabled = !fsm->isAlarmEnabled;
-            led_yellowToggle();
-            return RET_HANDLED;
+    case ROTARYBUTTON_PRESSED:
+        fsm->isAlarmEnabled = !fsm->isAlarmEnabled;
+        led_yellowToggle();
+        return RET_HANDLED;
 
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_setAlarm_hour;
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_setAlarm_hour;
+        return RET_TRANSITION;
+
+    case TIME_MATCH:
+        if (fsm->isAlarmEnabled)
+        {
+            fsm->state = state_alarmActive;
             return RET_TRANSITION;
-
-        case TIME_MATCH:
-            if (fsm->isAlarmEnabled) {
-                fsm->state = state_alarmActive;
-                return RET_TRANSITION;
-            }
-            return RET_IGNORED;
-        case EXIT:
-            scheduler_remove(&updateDisplay);
-            scheduler_remove(&alarmMatchCheck);
-            return RET_HANDLED;
-        default:
-            return RET_IGNORED;
+        }
+        return RET_IGNORED;
+    case EXIT:
+        scheduler_remove(&updateDisplay);
+        scheduler_remove(&alarmMatchCheck);
+        return RET_HANDLED;
+    default:
+        return RET_IGNORED;
     }
 }
 
-fsm_return_status_t state_setAlarm_hour(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            display_clear();
-            display_setCursor(0,0);
-            fprintf(displayout,"00:00\nSet Alarm Hour");
-            display_update();
-            fsm->alarmTime.hour = 0;
-            return RET_HANDLED;
+fsm_return_status_t state_setAlarm_hour(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        display_clear();
+        display_setCursor(0, 0);
+        fprintf(displayout, "00:00\nSet Alarm Hour");
+        display_update();
+        fsm->alarmTime.hour = 0;
+        return RET_HANDLED;
 
-        case ROTARYBUTTON_PRESSED:
-            fsm->alarmTime.hour = (fsm->alarmTime.hour + 1) % 24;
-            display_clear();
-            display_setCursor(0,0);
-            fprintf(displayout, "%02d:00\nSet Alarm Hour", fsm->alarmTime.hour);
-            display_update();
-            return RET_HANDLED;
-        
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_setAlarm_minute;
-            return RET_TRANSITION;
+    case ROTARYBUTTON_PRESSED:
+        fsm->alarmTime.hour = (fsm->alarmTime.hour + 1) % 24;
+        display_clear();
+        display_setCursor(0, 0);
+        fprintf(displayout, "%02d:00\nSet Alarm Hour", fsm->alarmTime.hour);
+        display_update();
+        return RET_HANDLED;
 
-        case EXIT:
-            return RET_HANDLED;
-    }
-    return RET_IGNORED;
-}
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_setAlarm_minute;
+        return RET_TRANSITION;
 
-fsm_return_status_t state_setAlarm_minute(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            display_clear();
-            display_setCursor(0,0);
-            fprintf(displayout, "%02d:00\nSet Alarm Minute", fsm->alarmTime.hour);
-            display_update();
-            fsm->alarmTime.minute = 0;
-            fsm->alarmTime.second = 0;
-            fsm->alarmTime.milli = 0;
-            return RET_HANDLED;
-
-        case ROTARYBUTTON_PRESSED:
-            display_clear();
-            display_setCursor(0,0);
-            fsm->alarmTime.minute = (fsm->alarmTime.minute + 1) % 60;
-            fprintf(displayout, "%02d:%02d\nSet Alarm Minute", fsm->alarmTime.hour, fsm->alarmTime.minute);
-            display_update();
-            return RET_HANDLED;
-
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_normalOperation;
-            return RET_TRANSITION;
-
-        case EXIT:
-            return RET_HANDLED;
+    case EXIT:
+        return RET_HANDLED;
     }
     return RET_IGNORED;
 }
 
+fsm_return_status_t state_setAlarm_minute(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        display_clear();
+        display_setCursor(0, 0);
+        fprintf(displayout, "%02d:00\nSet Alarm Minute", fsm->alarmTime.hour);
+        display_update();
+        fsm->alarmTime.minute = 0;
+        fsm->alarmTime.second = 0;
+        fsm->alarmTime.milli = 0;
+        return RET_HANDLED;
 
-fsm_return_status_t state_alarmActive(fsm_t *fsm, const event_t *event) {
-    switch (event->signal) {
-        case ENTRY:
-            stopAlarm.param = fsm;
-            scheduler_add(&blinkLED);
-            scheduler_add(&stopAlarm);
-            return RET_HANDLED;
+    case ROTARYBUTTON_PRESSED:
+        display_clear();
+        display_setCursor(0, 0);
+        fsm->alarmTime.minute = (fsm->alarmTime.minute + 1) % 60;
+        fprintf(displayout, "%02d:%02d\nSet Alarm Minute", fsm->alarmTime.hour, fsm->alarmTime.minute);
+        display_update();
+        return RET_HANDLED;
 
-        case PUSHBUTTON_PRESSED:
-            fsm->state = state_normalOperation;
-            return RET_TRANSITION;
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_normalOperation;
+        return RET_TRANSITION;
 
-        case ROTARYBUTTON_PRESSED:
-            fsm->state = state_normalOperation;
-            return RET_TRANSITION;
-        case EXIT:
-            scheduler_remove(&blinkLED);
-            led_redOff();
-            return RET_HANDLED;
-        case TIMEOUT:
-            fsm->state = state_normalOperation;
-            return RET_TRANSITION;
-        default:
-            return RET_IGNORED;
+    case EXIT:
+        return RET_HANDLED;
+    }
+    return RET_IGNORED;
+}
+
+fsm_return_status_t state_alarmActive(fsm_t *fsm, const event_t *event)
+{
+    switch (event->signal)
+    {
+    case ENTRY:
+        stopAlarm.param = fsm;
+        scheduler_add(&blinkLED);
+        scheduler_add(&stopAlarm);
+        return RET_HANDLED;
+
+    case PUSHBUTTON_PRESSED:
+        fsm->state = state_normalOperation;
+        return RET_TRANSITION;
+
+    case ROTARYBUTTON_PRESSED:
+        fsm->state = state_normalOperation;
+        return RET_TRANSITION;
+    case EXIT:
+        scheduler_remove(&blinkLED);
+        led_redOff();
+        return RET_HANDLED;
+    case TIMEOUT:
+        fsm->state = state_normalOperation;
+        return RET_TRANSITION;
+    default:
+        return RET_IGNORED;
     }
 }
 
-void toggleRedLED(void* param){
+void toggleRedLED(void *param)
+{
     led_redToggle();
 }
 
-void turnOffRedLED(void* param){
-    fsm_t* fsm = (fsm_t*)param;
-    //scheduler_remove(&blinkLED);
-    //led_redOff();
+void turnOffRedLED(void *param)
+{
+    fsm_t *fsm = (fsm_t *)param;
+    // scheduler_remove(&blinkLED);
+    // led_redOff();
     static const event_t matchEvent = {.signal = TIMEOUT};
-    fsm_dispatch(fsm, &matchEvent);  // or use scheduler if needed
+    fsm_dispatch(fsm, &matchEvent); // or use scheduler if needed
 }
 
-void refreshDisplay(void* param){
+void refreshDisplay(void *param)
+{
     system_time_t bufferTime = scheduler_getTime();
     time_t currentTime;
     systemTimeToTime(bufferTime, &currentTime);
     display_clear();
-    display_setCursor(0,0);
+    display_setCursor(0, 0);
     fprintf(displayout, "%02d:%02d:%02d\n",
-        currentTime.hour,
-        currentTime.minute,
-        currentTime.second
-    );
+            currentTime.hour,
+            currentTime.minute,
+            currentTime.second);
     display_update();
     led_greenToggle();
 }
 
-void checkAlarmMatch(void* param) {
-    fsm_t* fsm = (fsm_t*)param;
+void checkAlarmMatch(void *param)
+{
+    fsm_t *fsm = (fsm_t *)param;
 
-    if (!fsm || !fsm->isAlarmEnabled || fsm->state != state_normalOperation) {
+    if (!fsm || !fsm->isAlarmEnabled || fsm->state != state_normalOperation)
+    {
         return;
     }
 
@@ -259,33 +270,35 @@ void checkAlarmMatch(void* param) {
 
     if (now.hour == fsm->alarmTime.hour &&
         now.minute == fsm->alarmTime.minute &&
-        now.second == fsm->alarmTime.second) {
+        now.second == fsm->alarmTime.second)
+    {
 
         static const event_t matchEvent = {.signal = TIME_MATCH};
-        fsm_dispatch(fsm, &matchEvent);  // or use scheduler if needed
+        fsm_dispatch(fsm, &matchEvent); // or use scheduler if needed
     }
 }
 
-
-
 // --- FSM Dispatcher & Initialization ---
 /* dispatches events to state machine, called in application*/
-void fsm_dispatch(fsm_t * fsm, const event_t * event) {
+void fsm_dispatch(fsm_t *fsm, const event_t *event)
+{
     const event_t entryEvent = {.signal = ENTRY};
     const event_t exitEvent = {.signal = EXIT};
 
-    state_t s = fsm->state;         // Save state in s
-    fsm_return_status_t r = fsm->state(fsm, event);         // Execute state handler and save return in r
+    state_t s = fsm->state;                         // Save state in s
+    fsm_return_status_t r = fsm->state(fsm, event); // Execute state handler and save return in r
 
     /*Check if state transition ocurred*/
-    if (r == RET_TRANSITION) {
-        s(fsm, &exitEvent); //< call exit action of last state
+    if (r == RET_TRANSITION)
+    {
+        s(fsm, &exitEvent);           //< call exit action of last state
         fsm->state(fsm, &entryEvent); //< call entry action of new state
     }
 }
 
 /* sets and calls initial state of state machine */
-void fsm_init(fsm_t * fsm, state_t init) {
+void fsm_init(fsm_t *fsm, state_t init)
+{
     //... other initialization
     const event_t entryEvent = {.signal = ENTRY};
     fsm->state = init;
